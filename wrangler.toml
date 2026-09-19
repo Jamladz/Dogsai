@@ -1,0 +1,18 @@
+name = "dogsai-api"
+main = "worker/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+# Configure your Cloudflare Pages Frontend URL to handle strict CORS validation if required
+FRONTEND_URL = "https://dogsai.pages.dev"
+
+# Configuration for Account Age Provider
+ACCOUNT_AGE_API_URL = "https://api.telegram-age-estimator.com/estimate"
+
+# NOTE: The following variables must be registered as SECRETS on Cloudflare:
+# Run:
+#   npx wrangler secret put TELEGRAM_BOT_TOKEN
+#   npx wrangler secret put FIREBASE_PROJECT_ID
+#   npx wrangler secret put FIREBASE_CLIENT_EMAIL
+#   npx wrangler secret put FIREBASE_PRIVATE_KEY
+#   npx wrangler secret put ACCOUNT_AGE_API_KEY

@@ -1,0 +1,6 @@
+{
+  "name": "DogsAI",
+  "description": "The real production-ready Telegram Mini App with secure rewards, premium detection, and account age estimation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

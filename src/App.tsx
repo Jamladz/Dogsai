@@ -130,7 +130,7 @@ export default function App() {
 
   // Construct Mock / Real Headers and Query parameters for auth requests
   const getAuthHeaders = () => {
-    if (isTelegramClient && window.Telegram?.WebApp?.initData) {
+    if (window.Telegram?.WebApp?.initData) {
       return {
         'Content-Type': 'application/json',
         'X-Telegram-Init-Data': window.Telegram.WebApp.initData
@@ -487,7 +487,7 @@ export default function App() {
 
     // Trigger authentication
     handleAuthenticate();
-  }, [isTelegramClient]);
+  }, []);
 
   // Re-run authentication when emulator params change
   const applyEmulatorParams = () => {

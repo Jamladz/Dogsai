@@ -287,7 +287,14 @@ class WorkerFirestoreClient {
 
 // HMAC Validation
 async function validateTelegramInitData(initData: string, botToken: string): Promise<boolean> {
-  if (!botToken) return true; // Safety default bypass for initial configuration test
+  const cleanToken = (botToken || '').replace(/['"]/g, '').trim();
+  if (!cleanToken || 
+      cleanToken === "" || 
+      cleanToken.toUpperCase() === "YOUR_TELEGRAM_BOT_TOKEN" || 
+      cleanToken.toUpperCase().startsWith("YOUR_")) {
+    // Development bypass if no token is configured or left as default template
+    return true;
+  }
 
   try {
     const params = new URLSearchParams(initData);

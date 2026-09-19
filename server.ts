@@ -30,8 +30,13 @@ console.log(`Firestore REST Client Initialized. Configured for real Firebase: ${
 
 // Utility: Web Crypto Telegram initData validation (standard HMAC-SHA256)
 async function validateTelegramInitData(initData: string, botToken: string): Promise<boolean> {
-  if (!botToken || botToken === "YOUR_TELEGRAM_BOT_TOKEN") {
-    // Development bypass if no token is configured
+  const cleanToken = (botToken || '').replace(/['"]/g, '').trim();
+  if (!cleanToken || 
+      cleanToken === "" || 
+      cleanToken.toUpperCase() === "YOUR_TELEGRAM_BOT_TOKEN" || 
+      cleanToken.toUpperCase().startsWith("YOUR_")) {
+    // Development bypass if no token is configured or left as default template
+    console.log("DogsAI Server: Telegram Bot Token not set, bypass authentication validation.");
     return true;
   }
 

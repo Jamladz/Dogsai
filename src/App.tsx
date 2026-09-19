@@ -91,6 +91,8 @@ export default function App() {
 
   // Interactive UI notifications
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [sandboxActive, setSandboxActive] = useState<boolean>(false);
 
   // Developer Simulation Console States
   const [devConsoleOpen, setDevConsoleOpen] = useState<boolean>(false);
@@ -131,7 +133,7 @@ export default function App() {
 
   // Construct Mock / Real Headers and Query parameters for auth requests
   const getAuthHeaders = () => {
-    if (window.Telegram?.WebApp?.initData) {
+    if (window.Telegram?.WebApp?.initData && !sandboxActive) {
       return {
         'Content-Type': 'application/json',
         'X-Telegram-Init-Data': window.Telegram.WebApp.initData
@@ -166,6 +168,7 @@ export default function App() {
   // Sync API: Master authentication and state loader
   const handleAuthenticate = async () => {
     setLoading(true);
+    setAuthError(null);
     const start = Date.now();
     try {
       const response = await fetch('/api/auth', {
@@ -179,6 +182,7 @@ export default function App() {
 
       if (response.ok && data.success) {
         setUser(data.user);
+        setAuthError(null);
         
         // Decide user step based on database fields
         if (data.user.onboardingCompleted) {
@@ -190,6 +194,7 @@ export default function App() {
           setOnboardingStep(0); // Start onboarding step 0 (Welcome page)
         }
       } else {
+        setAuthError(data.error || "Authentication failed.");
         showToast(data.error || "Authentication failed.");
       }
     } catch (err) {
@@ -570,6 +575,62 @@ export default function App() {
             <Loader2 className="w-9 h-9 text-orange-500 animate-spin" />
             <p className="text-sm text-slate-500 dark:text-slate-400">Authenticating account security...</p>
           </div>
+        ) : authError && !sandboxActive ? (
+          /* STUNNING DIAGNOSTIC & EMULATOR TOGGLE INTERFACE */
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex-1 flex flex-col justify-between py-6 space-y-6 text-center"
+          >
+            <div className="space-y-3">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-orange-50 dark:bg-orange-950/20 text-orange-500 flex items-center justify-center text-3xl">
+                ⚠️
+              </div>
+              <h2 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Security Validation Alert</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed px-4">
+                We couldn't verify your secure Telegram authentication payload.
+              </p>
+            </div>
+
+            <div className="bg-slate-100 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 text-left space-y-3">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Error Signature</p>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-red-500/10 text-red-500 font-mono text-[11px] break-all leading-tight">
+                {authError}
+              </div>
+              
+              <div className="pt-2 space-y-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Troubleshooting steps:</p>
+                <ul className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1.5 list-disc pl-3">
+                  <li>Verify that your <span className="font-mono text-orange-500">TELEGRAM_BOT_TOKEN</span> is registered in settings.</li>
+                  <li>Launch the App from a real Telegram Bot dialog link.</li>
+                  <li>Developers can bypass real backend auth and test features in sandbox mode below.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                id="sandbox-bypass-btn"
+                onClick={() => {
+                  setSandboxActive(true);
+                  setAuthError(null);
+                  setTimeout(() => handleAuthenticate(), 100);
+                }}
+                className="w-full py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm transition-all shadow-md active:scale-95 flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <span>Launch Developer Sandbox Mode</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              
+              <button
+                id="retry-auth-btn"
+                onClick={handleAuthenticate}
+                className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs transition-all flex items-center justify-center cursor-pointer"
+              >
+                <span>Retry Connection</span>
+              </button>
+            </div>
+          </motion.div>
         ) : onboardingStep < 3 ? (
           /* ONBOARDING WIZARD INTERFACE */
           <AnimatePresence mode="wait">

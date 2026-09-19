@@ -36,6 +36,7 @@ declare global {
         expand: () => void;
         close: () => void;
         requestFullscreen?: () => void;
+        isVersionAtLeast?: (version: string) => boolean;
         initData: string;
         initDataUnsafe: any;
         themeParams: {
@@ -463,7 +464,7 @@ export default function App() {
         tg.setHeaderColor(tg.colorScheme === 'dark' ? '#0f172a' : '#f8fafc');
       }
 
-      // Handle Fullscreen events
+      // Handle Fullscreen events if supported (v7.0+)
       const onFullscreenChanged = () => {
         setIsFullscreen(true);
       };
@@ -471,14 +472,24 @@ export default function App() {
         setIsFullscreen(false);
       };
 
-      if (tg.onEvent) {
-        tg.onEvent('fullscreenChanged', onFullscreenChanged);
-        tg.onEvent('fullscreenFailed', onFullscreenFailed);
+      const hasFullscreenSupport = !!(tg.requestFullscreen && tg.isVersionAtLeast && tg.isVersionAtLeast('7.0'));
+
+      if (hasFullscreenSupport && tg.onEvent) {
+        try {
+          tg.onEvent('fullscreenChanged', onFullscreenChanged);
+          tg.onEvent('fullscreenFailed', onFullscreenFailed);
+        } catch (e) {
+          console.warn("Fullscreen event registration failed", e);
+        }
       }
 
-      // Automatically attempt to expand full screen if supported
-      if (tg.requestFullscreen) {
-        tg.requestFullscreen();
+      // Automatically attempt to expand full screen if supported (v7.0+)
+      if (hasFullscreenSupport && tg.requestFullscreen) {
+        try {
+          tg.requestFullscreen();
+        } catch (e) {
+          console.warn("Fullscreen request failed", e);
+        }
       }
 
       // Sync active styling

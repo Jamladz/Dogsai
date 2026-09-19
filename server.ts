@@ -41,12 +41,35 @@ async function validateTelegramInitData(initData: string, botToken: string): Pro
   }
 
   try {
-    const params = new URLSearchParams(initData);
-    const hash = params.get("hash");
-    if (!hash) return false;
+    // Reconstruct dataCheckString from raw pairs to prevent URL decoding side-effects
+    const pairs = initData.split('&');
+    const filteredPairs: { key: string; value: string }[] = [];
+    let receivedHash = '';
 
-    const keys = Array.from(params.keys()).filter(key => key !== "hash").sort();
-    const dataCheckString = keys.map(key => `${key}=${params.get(key)}`).join("\n");
+    for (const pair of pairs) {
+      const equalIdx = pair.indexOf('=');
+      if (equalIdx === -1) continue;
+      const key = pair.substring(0, equalIdx);
+      const val = pair.substring(equalIdx + 1);
+
+      if (key === 'hash') {
+        receivedHash = val;
+        continue;
+      }
+
+      filteredPairs.push({ 
+        key: decodeURIComponent(key), 
+        value: decodeURIComponent(val) 
+      });
+    }
+
+    if (!receivedHash) return false;
+
+    // Sort alphabetically by key
+    filteredPairs.sort((a, b) => a.key.localeCompare(b.key));
+
+    // Form data_check_string
+    const dataCheckString = filteredPairs.map(p => `${p.key}=${p.value}`).join('\n');
 
     const encoder = new TextEncoder();
     const webAppDataKey = await crypto.subtle.importKey(
@@ -60,7 +83,7 @@ async function validateTelegramInitData(initData: string, botToken: string): Pro
     const secretKeyBuffer = await crypto.subtle.sign(
       "HMAC",
       webAppDataKey,
-      encoder.encode(botToken)
+      encoder.encode(cleanToken)
     );
 
     const secretKey = await crypto.subtle.importKey(
@@ -81,7 +104,7 @@ async function validateTelegramInitData(initData: string, botToken: string): Pro
       .map(b => b.toString(16).padStart(2, "0"))
       .join("");
 
-    return hexSignature === hash;
+    return hexSignature === receivedHash;
   } catch (err) {
     console.error("Telegram validation error:", err);
     return false;
